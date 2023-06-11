@@ -10,21 +10,21 @@ class MyDaemon(Daemon):
                 archivo_log = open("/var/log/monitorappsd_log", "w")
                 archivo_log.close()
 
+                # Inicializamos variables
                 estado_ejecucion = {}
                 cant_intervalos = 0
                 tiempo_espera = 5
 
                 while True:
-                        archivo_log = open("/var/log/monitorappsd_log", "a")
-                        
+                        archivo_log = open("/var/log/monitorappsd_log", "a")                        
                         archivo_log.write('\n--------------------------------\n')
 
-                        proceso_date = Popen("date", stdout=PIPE)
-                        
-                        out, err = proceso_date.communicate()
-                        
+                        # Escribimos la fecha del momento
+                        proceso_date = Popen("date", stdout=PIPE)                        
+                        out, err = proceso_date.communicate()                        
                         archivo_log.write(out.decode('utf-8')+'\n')
 
+                        # Lista de aplicaciones a monitorear
                         aplicaciones = ['mate-terminal', 'pluma', 'mate-calc','gnome-calculator']
 
                         for app in aplicaciones:
@@ -51,10 +51,13 @@ class MyDaemon(Daemon):
                             
                         archivo_log.close()
                         
+                        # Esperamos una cantidad de segundos 
                         time.sleep(tiempo_espera)
                         cant_intervalos +=1
 
                         if cant_intervalos >= 3:
+
+                                # Cada cierto tiempo, verificamos si se ejecuto o no cada aplicacion
                                 espera = cant_intervalos*tiempo_espera
                                 archivo_log = open("/var/log/monitorappsd_log", "a")
                                 archivo_log.write('\n\n\n--------------------------------\n')
@@ -71,6 +74,7 @@ class MyDaemon(Daemon):
                                 
                                 archivo_log.write('--------------------------------\n\n\n')
                                 archivo_log.close()
+                                
                                 # Limpia el diccionario de estado de ejecución
                                 estado_ejecucion = {}
                                 cant_intervalos = 0
