@@ -9,6 +9,11 @@ class MyDaemon(Daemon):
                 # Creamos el log del daemon
                 archivo_log = open("/var/log/monitorappsd_log", "w")
                 archivo_log.close()
+
+                estado_ejecucion = {}
+                cant_intervalos = 0
+                tiempo_espera = 5
+
                 while True:
                         archivo_log = open("/var/log/monitorappsd_log", "a")
                         
@@ -20,7 +25,7 @@ class MyDaemon(Daemon):
                         
                         archivo_log.write(out.decode('utf-8')+'\n')
 
-                        aplicaciones = ['mate-terminal', 'pluma', 'mate-calc']
+                        aplicaciones = ['mate-terminal', 'pluma', 'mate-calc','gnome-calculator']
 
                         for app in aplicaciones:
                         
@@ -40,12 +45,35 @@ class MyDaemon(Daemon):
                             if out:
                                 archivo_log.write(f'{app}: SÍ se está ejecutando.\n')
                                 archivo_log.write(out.decode('utf-8')+'\n')
+                                estado_ejecucion[app] = True
                             else:
                                 archivo_log.write(f'{app}: NO se está ejecutando.\n')
                             
                         archivo_log.close()
                         
-                        time.sleep(5)
+                        time.sleep(tiempo_espera)
+                        cant_intervalos +=1
+
+                        if cant_intervalos >= 3:
+                                espera = cant_intervalos*tiempo_espera
+                                archivo_log = open("/var/log/monitorappsd_log", "a")
+                                archivo_log.write('\n\n\n--------------------------------\n')
+                                archivo_log.write(f'Verificación de ejecución cada {espera} segundos:\n')
+
+                                for app in aplicaciones:
+                                        if app in estado_ejecucion:
+                                                if estado_ejecucion[app]:
+                                                        archivo_log.write(f'{app}: SÍ se ejecutó.\n')
+                                                else:
+                                                        archivo_log.write(f'{app}: NO se ejecutó.\n')
+                                        else:
+                                                archivo_log.write(f'{app}: NO se ejecutó.\n')
+                                
+                                archivo_log.write('--------------------------------\n\n\n')
+                                archivo_log.close()
+                                # Limpia el diccionario de estado de ejecución
+                                estado_ejecucion = {}
+                                cant_intervalos = 0
  
 if __name__ == "__main__":
         daemon = MyDaemon('/tmp/monitorappsd.pid')
@@ -54,8 +82,6 @@ if __name__ == "__main__":
                         daemon.start()
                 elif 'stop' == sys.argv[1]:
                         daemon.stop()
-                        # Eliminamos el log para la siguiente ejecución.
-                        os.remove("/var/log/monitorappsd_log")
                 elif 'restart' == sys.argv[1]:
                         daemon.restart()
                 else:
